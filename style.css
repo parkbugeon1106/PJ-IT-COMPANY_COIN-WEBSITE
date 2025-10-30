@@ -15,19 +15,11 @@ header {
   background-color: #fff8e1;
 }
 
-.logo { font-weight: 700; font-size: 1.4rem; }
+.logo { font-weight: 700; font-size: 1.4rem; cursor: pointer; }
 .site-title { font-weight: 600; font-size: 1rem; }
-.lang-toggle select {
-  border: none;
-  background: transparent;
-  font-size: 1rem;
-  cursor: pointer;
-}
+.lang-toggle select { border: none; background: transparent; font-size: 1rem; cursor: pointer; }
 
-.search-area {
-  margin: 20px;
-}
-
+.search-area { margin: 20px; }
 input {
   padding: 8px 12px;
   width: 250px;
