@@ -1,27 +1,23 @@
-// ===========================
-// 언어 설정
-// ===========================
 let lang = "ko";
+
 const langPack = {
   ko: {
     gainers: "실시간 급등 코인 TOP 3",
     losers: "실시간 하락 코인 TOP 3",
     chart: "BTC 실시간 그래프",
-    placeholder: "코인명 (예: 비트코인, BTC)",
+    placeholder: "코인명 (예: 비트코인 / Bitcoin)",
     search: "검색"
   },
   en: {
     gainers: "Top 3 Gainers",
     losers: "Top 3 Losers",
     chart: "BTC Live Chart",
-    placeholder: "Coin name (e.g. Bitcoin, BTC)",
+    placeholder: "Enter Coin (ex: Bitcoin / BTC)",
     search: "Search"
   }
 };
 
-// ===========================
-// 언어 변경 이벤트
-// ===========================
+// ✅ 언어 전환
 document.getElementById("lang").addEventListener("change", (e) => {
   lang = e.target.value;
   const t = langPack[lang];
@@ -32,19 +28,24 @@ document.getElementById("lang").addEventListener("change", (e) => {
   document.getElementById("search-btn").innerText = t.search;
 });
 
-// ===========================
-// 검색 기능
-// ===========================
+// ✅ 검색 (한글 + 영어)
+const coinMap = {
+  "비트코인": "BTC", "비트": "BTC",
+  "이더리움": "ETH", "이더": "ETH",
+  "리플": "XRP", "도지": "DOGE",
+  "솔라나": "SOL", "폴리곤": "MATIC",
+  "카르다노": "ADA"
+};
+
 document.getElementById("search-btn").addEventListener("click", () => {
-  const name = document.getElementById("search-input").value.trim();
-  if (name) window.location.href = `coin.html?name=${name}`;
+  let input = document.getElementById("search-input").value.trim().toUpperCase();
+  if (coinMap[input]) input = coinMap[input];
+  if (input) window.location.href = `coin.html?name=${input}`;
 });
 
-// ===========================
-// 실시간 BTC 차트
-// ===========================
+// ✅ 실시간 BTC 그래프
 let chart;
-let priceData = [];
+let dataPoints = [];
 
 function startBTCStream() {
   const socket = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
@@ -55,10 +56,10 @@ function startBTCStream() {
     data: {
       labels: [],
       datasets: [{
-        label: "BTC/USDT (1초 단위)",
+        label: "BTC/USDT (가격 × 0.001 기반)",
         data: [],
         borderColor: "#000",
-        backgroundColor: "rgba(255, 255, 0, 0.2)",
+        backgroundColor: "rgba(255, 255, 0, 0.3)",
         pointRadius: 0
       }]
     },
@@ -66,17 +67,8 @@ function startBTCStream() {
       animation: false,
       responsive: true,
       scales: {
-        x: {
-          title: { display: true, text: "시간(초)" },
-          ticks: { maxTicksLimit: 10 }
-        },
-        y: {
-          beginAtZero: false,
-          title: { display: true, text: "가격(USD)" }
-        }
-      },
-      plugins: {
-        legend: { display: false }
+        x: { title: { display: true, text: "가격 × 0.001" } },
+        y: { title: { display: true, text: "가격(USD)" }, beginAtZero: false }
       }
     }
   });
@@ -85,66 +77,47 @@ function startBTCStream() {
     const trade = JSON.parse(event.data);
     const price = parseFloat(trade.p);
     const rounded = Math.round(price / 100) * 100;
-    const time = new Date().toLocaleTimeString().split(" ")[0];
+    const xValue = (price * 0.001).toFixed(2);
 
-    priceData.push({ x: time, y: rounded });
-    if (priceData.length > 60) priceData.shift();
+    dataPoints.push({ x: xValue, y: rounded });
+    if (dataPoints.length > 60) dataPoints.shift();
 
-    chart.data.labels = priceData.map(p => p.x);
-    chart.data.datasets[0].data = priceData.map(p => p.y);
+    chart.data.labels = dataPoints.map(p => p.x);
+    chart.data.datasets[0].data = dataPoints.map(p => p.y);
     chart.update();
 
     document.getElementById("price").innerText = `$${rounded.toLocaleString()}`;
   };
 }
 
-// ===========================
-// 거래량 / 시가총액 정보
-// ===========================
+// ✅ 시가총액/거래량
 async function updateMarketInfo() {
-  try {
-    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT");
-    const data = await res.json();
-
-    const vol = Math.round(parseFloat(data.quoteVolume) / 100) * 100;
-    const cap = Math.round(parseFloat(data.lastPrice) * parseFloat(data.volume) / 100) * 100;
-
-    document.getElementById("volume").innerText = `$${vol.toLocaleString()}`;
-    document.getElementById("marketcap").innerText = `$${cap.toLocaleString()}`;
-  } catch (err) {
-    console.log("Binance API 오류:", err);
-  }
+  const res = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT");
+  const data = await res.json();
+  const vol = Math.round(parseFloat(data.quoteVolume) / 100) * 100;
+  const cap = Math.round(parseFloat(data.lastPrice) * parseFloat(data.volume) / 100) * 100;
+  document.getElementById("volume").innerText = `$${vol.toLocaleString()}`;
+  document.getElementById("marketcap").innerText = `$${cap.toLocaleString()}`;
 }
 
-// ===========================
-// 급등/하락 TOP 3
-// ===========================
+// ✅ TOP5000 코인에서 급등/하락 TOP3
 async function loadTopCoins() {
-  try {
-    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
-    const data = await res.json();
+  const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+  const data = await res.json();
 
-    const sorted = data
-      .filter(d => d.symbol.endsWith("USDT"))
-      .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
+  const filtered = data.filter(c => c.symbol.endsWith("USDT")).slice(0, 5000);
+  const sorted = filtered.sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
+  const gainers = sorted.slice(0, 3);
+  const losers = sorted.slice(-3).reverse();
 
-    const gainers = sorted.slice(0, 3);
-    const losers = sorted.slice(-3).reverse();
-
-    document.getElementById("top-gainers").innerHTML =
-      gainers.map(c => `<li>${c.symbol.replace("USDT", "")} (+${parseFloat(c.priceChangePercent).toFixed(2)}%)</li>`).join("");
-    document.getElementById("top-losers").innerHTML =
-      losers.map(c => `<li>${c.symbol.replace("USDT", "")} (${parseFloat(c.priceChangePercent).toFixed(2)}%)</li>`).join("");
-  } catch (err) {
-    console.error("TOP3 데이터 불러오기 실패:", err);
-  }
+  document.getElementById("top-gainers").innerHTML =
+    gainers.map(c => `<li>${c.symbol.replace("USDT", "")} (+${parseFloat(c.priceChangePercent).toFixed(2)}%)</li>`).join("");
+  document.getElementById("top-losers").innerHTML =
+    losers.map(c => `<li>${c.symbol.replace("USDT", "")} (${parseFloat(c.priceChangePercent).toFixed(2)}%)</li>`).join("");
 }
 
-// ===========================
-// 실행
-// ===========================
 startBTCStream();
 updateMarketInfo();
 loadTopCoins();
-setInterval(updateMarketInfo, 3000);   // 3초마다 거래량/시총 갱신
-setInterval(loadTopCoins, 30000);      // 30초마다 TOP3 갱신
+setInterval(updateMarketInfo, 3000);
+setInterval(loadTopCoins, 20000);
