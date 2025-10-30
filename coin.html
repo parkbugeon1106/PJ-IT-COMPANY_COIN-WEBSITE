@@ -16,12 +16,75 @@
 
   <main>
     <section class="coin-info">
-      <h2 id="coin-name"></h2>
+      <h2 id="coin-name">코인 이름 불러오는 중...</h2>
       <canvas id="coinChart"></canvas>
-      <div class="info-box">
-        <p>현재가, 전일 대비, 거래량, 시가총액 등 정보는 실시간 업데이트됩니다.</p>
+
+      <div class="info-box" id="coin-stats">
+        <p>데이터 로딩 중...</p>
       </div>
     </section>
   </main>
+
+  <script>
+    // ✅ URL에서 코인 이름 추출
+    const params = new URLSearchParams(window.location.search);
+    const coinName = params.get("name") || "bitcoin";
+    const displayName = coinName.toUpperCase();
+
+    document.getElementById("coin-name").innerText = displayName + " 실시간 그래프";
+
+    let chartInstance;
+
+    // ✅ 그래프 + 시세 정보 불러오기
+    async function updateCoinData() {
+      try {
+        // 그래프 데이터
+        const resChart = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName}/market_chart?vs_currency=usd&days=1`);
+        const chartData = await resChart.json();
+        const prices = chartData.prices.map(p => p[1]);
+
+        // 시세 데이터
+        const resInfo = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinName}`);
+        const info = await resInfo.json();
+        const coin = info[0];
+
+        // 정보 표시
+        document.getElementById("coin-stats").innerHTML = `
+          <p><b>현재가:</b> $${coin.current_price.toLocaleString()}</p>
+          <p><b>전일 대비:</b> ${coin.price_change_percentage_24h.toFixed(2)}%</p>
+          <p><b>거래량:</b> $${coin.total_volume.toLocaleString()}</p>
+          <p><b>시가총액:</b> $${coin.market_cap.toLocaleString()}</p>
+        `;
+
+        // 차트 업데이트
+        const ctx = document.getElementById("coinChart");
+        if (!chartInstance) {
+          chartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: prices.map((_, i) => i),
+              datasets: [{
+                label: `${displayName}/USD (실시간)`,
+                data: prices,
+                borderColor: "#000",
+                backgroundColor: "rgba(255, 255, 0, 0.2)"
+              }]
+            },
+            options: { responsive: true, animation: false, scales: { y: { beginAtZero: false } } }
+          });
+        } else {
+          chartInstance.data.datasets[0].data = prices;
+          chartInstance.update();
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById("coin-stats").innerHTML = `<p style="color:red;">데이터를 불러오지 못했습니다.</p>`;
+      }
+    }
+
+    // ✅ 1초마다 자동 업데이트
+    setInterval(updateCoinData, 1000);
+    updateCoinData();
+  </script>
 </body>
 </html>
