@@ -1,6 +1,5 @@
 let lang = "ko";
 
-// 🌐 다국어 지원
 const langPack = {
   ko: {
     gainers: "실시간 급등 코인 TOP 3",
@@ -18,7 +17,7 @@ const langPack = {
   }
 };
 
-// 🔄 언어 전환
+// 언어 전환
 document.getElementById("lang").addEventListener("change", (e) => {
   lang = e.target.value;
   const t = langPack[lang];
@@ -29,7 +28,7 @@ document.getElementById("lang").addEventListener("change", (e) => {
   document.getElementById("search-btn").innerText = t.searchButton;
 });
 
-// ✅ 실시간 BTC 그래프 (Binance WebSocket)
+// ✅ 실시간 BTC 그래프 (WebSocket)
 let btcChart;
 let btcPrices = [];
 
@@ -59,7 +58,7 @@ function startBTCStream() {
   socket.onmessage = (event) => {
     const trade = JSON.parse(event.data);
     const price = parseFloat(trade.p);
-    const rounded = Math.round(price / 100) * 100; // 100달러 단위 반올림
+    const rounded = Math.round(price / 100) * 100;
     btcPrices.push(rounded);
     if (btcPrices.length > 100) btcPrices.shift();
 
@@ -71,7 +70,7 @@ function startBTCStream() {
   };
 }
 
-// ✅ 거래량, 시가총액 (Binance REST API)
+// ✅ 거래량 / 시가총액 / TOP3
 async function updateMarketInfo() {
   try {
     const res = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT");
@@ -86,7 +85,6 @@ async function updateMarketInfo() {
   }
 }
 
-// ✅ 급등 / 하락 TOP3 (Binance API)
 async function loadTopCoins() {
   try {
     const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
@@ -109,17 +107,15 @@ async function loadTopCoins() {
   }
 }
 
-// ✅ 검색 기능
+// 검색 기능
 document.getElementById("search-btn").addEventListener("click", () => {
   const name = document.getElementById("search-input").value.trim();
   if (name) window.location.href = `coin.html?name=${name}`;
 });
 
-// 🟢 초기 실행
 startBTCStream();
 updateMarketInfo();
 loadTopCoins();
 
-// 반복 갱신
 setInterval(updateMarketInfo, 5000);
 setInterval(loadTopCoins, 30000);
