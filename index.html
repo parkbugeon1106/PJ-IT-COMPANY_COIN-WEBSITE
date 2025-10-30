@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PJ COMPANY COIN SITE | 실시간 코인 정보</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">PJ IT COMPANY</div>
+    <div class="site-title">PJ COMPANY COIN SITE</div>
+  </header>
+
+  <main>
+    <section class="search-area">
+      <input id="search-input" type="text" placeholder="COIN을 검색하세요 (예: BTC, ETH)" />
+      <button id="search-btn">검색</button>
+    </section>
+
+    <section class="news-section">
+      <h2>실시간 코인 뉴스</h2>
+      <ul id="news-list">
+        <li>최신 코인 뉴스 불러오는 중...</li>
+      </ul>
+    </section>
+
+    <section class="realtime-section">
+      <div class="coin-box">
+        <h3>실시간 급등 코인 TOP 3</h3>
+        <ul id="top-gainers"></ul>
+      </div>
+      <div class="coin-box">
+        <h3>실시간 하락 코인 TOP 3</h3>
+        <ul id="top-losers"></ul>
+      </div>
+    </section>
+
+    <section class="chart-section">
+      <h3>BTC 실시간 그래프</h3>
+      <canvas id="btcChart"></canvas>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 PJ IT COMPANY — All Rights Reserved.
+  </footer>
+</body>
+</html>
