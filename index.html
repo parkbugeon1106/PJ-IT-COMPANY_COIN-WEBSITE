@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PJ COMPANY COIN SITE | 실시간 코인 데이터</title>
+  <title>코인 상세 | PJ COMPANY COIN SITE</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="script.js"></script>
+  <script defer src="coin.js"></script>
 </head>
 <body>
   <header>
-    <div class="logo">PJ IT COMPANY</div>
+    <div class="logo" onclick="window.location.href='index.html'">PJ IT COMPANY</div>
     <div class="site-title">PJ COMPANY COIN SITE</div>
     <div class="lang-toggle">
       🌐 
@@ -22,29 +22,16 @@
   </header>
 
   <main>
-    <section class="search-area">
-      <input id="search-input" type="text" placeholder="코인명 (예: 비트코인, BTC)">
-      <button id="search-btn">검색</button>
-    </section>
+    <section class="coin-info">
+      <h2 id="coin-title">로딩 중...</h2>
+      <canvas id="coinChart"></canvas>
 
-    <section class="realtime-section">
-      <div class="coin-box">
-        <h3 id="gainers-title">실시간 급등 코인 TOP 3</h3>
-        <ul id="top-gainers"></ul>
-      </div>
-      <div class="coin-box">
-        <h3 id="losers-title">실시간 하락 코인 TOP 3</h3>
-        <ul id="top-losers"></ul>
-      </div>
-    </section>
-
-    <section class="chart-section">
-      <h3 id="chart-title">BTC 실시간 그래프</h3>
-      <canvas id="btcChart"></canvas>
       <div class="live-info">
-        <p><b>현재가:</b> <span id="price">-</span> USD</p>
-        <p><b>거래량(24h):</b> <span id="volume">-</span> USD</p>
-        <p><b>시가총액(추정):</b> <span id="marketcap">-</span> USD</p>
+        <p><b id="price-label">현재가:</b> <span id="price">-</span> USD</p>
+        <p><b id="change-label">변동률:</b> <span id="change">-</span>%</p>
+        <p><b id="volume-label">거래량(24h):</b> <span id="volume">-</span> USD</p>
+        <p><b id="high-label">최고가(24h):</b> <span id="high">-</span> USD</p>
+        <p><b id="low-label">최저가(24h):</b> <span id="low">-</span> USD</p>
       </div>
     </section>
   </main>
