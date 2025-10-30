@@ -27,11 +27,6 @@
       <button id="search-btn">검색</button>
     </section>
 
-    <section class="news-section">
-      <h2 id="news-title">실시간 코인 뉴스</h2>
-      <ul id="news-list"><li>뉴스 불러오는 중...</li></ul>
-    </section>
-
     <section class="realtime-section">
       <div class="coin-box">
         <h3 id="gainers-title">실시간 급등 코인 TOP 3</h3>
@@ -46,6 +41,11 @@
     <section class="chart-section">
       <h3 id="chart-title">BTC 실시간 그래프</h3>
       <canvas id="btcChart"></canvas>
+      <div class="live-info">
+        <p><b>현재가:</b> <span id="price">-</span> USD</p>
+        <p><b>거래량:</b> <span id="volume">-</span> USD</p>
+        <p><b>시가총액:</b> <span id="marketcap">-</span> USD</p>
+      </div>
     </section>
   </main>
 
