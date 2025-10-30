@@ -15,21 +15,16 @@
   </header>
 
   <main>
-    <!-- 🔍 검색 영역 -->
     <section class="search-area">
-      <input id="search-input" type="text" placeholder="COIN을 검색하세요 (예: BTC, ETH, 비트코인)" />
+      <input id="search-input" type="text" placeholder="코인명 (예: 비트코인, BTC)" />
       <button id="search-btn">검색</button>
     </section>
 
-    <!-- 📰 뉴스 섹션 -->
     <section class="news-section">
       <h2>실시간 코인 뉴스</h2>
-      <ul id="news-list">
-        <li>뉴스 로딩 중...</li>
-      </ul>
+      <ul id="news-list"><li>뉴스 불러오는 중...</li></ul>
     </section>
 
-    <!-- 📊 실시간 급등·하락 TOP3 -->
     <section class="realtime-section">
       <div class="coin-box">
         <h3>실시간 급등 코인 TOP 3</h3>
@@ -41,7 +36,6 @@
       </div>
     </section>
 
-    <!-- 📈 비트코인 실시간 그래프 -->
     <section class="chart-section">
       <h3>BTC 실시간 그래프</h3>
       <canvas id="btcChart"></canvas>
