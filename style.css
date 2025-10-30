@@ -86,3 +86,13 @@ footer {
   margin-top: 50px;
   font-size: 0.9rem;
 }
+canvas {
+  width: 100% !important;
+  max-height: 400px;
+  margin-top: 20px;
+}
+
+h3 {
+  margin-top: 40px;
+  color: #222;
+}
