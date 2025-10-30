@@ -1,3 +1,4 @@
+/* -------------------- 기본 설정 -------------------- */
 body {
   font-family: 'Noto Sans KR', sans-serif;
   margin: 0;
@@ -6,6 +7,7 @@ body {
   text-align: center;
 }
 
+/* -------------------- 헤더 -------------------- */
 header {
   display: flex;
   justify-content: space-between;
@@ -15,10 +17,23 @@ header {
   background-color: #fff8e1;
 }
 
-.logo { font-weight: 700; font-size: 1.4rem; cursor: pointer; }
-.site-title { font-weight: 600; font-size: 1rem; }
-.lang-toggle select { border: none; background: transparent; font-size: 1rem; cursor: pointer; }
+.logo { 
+  font-weight: 700; 
+  font-size: 1.4rem; 
+  cursor: pointer; 
+}
+.site-title { 
+  font-weight: 600; 
+  font-size: 1rem; 
+}
+.lang-toggle select { 
+  border: none; 
+  background: transparent; 
+  font-size: 1rem; 
+  cursor: pointer; 
+}
 
+/* -------------------- 네비게이션 -------------------- */
 .coin-nav {
   display: flex;
   justify-content: center;
@@ -34,10 +49,16 @@ header {
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  transition: 0.3s;
 }
-.coin-nav button:hover { background: #ffe870; }
+.coin-nav button:hover { 
+  background: #ffe870; 
+}
 
-.search-area { margin: 25px; }
+/* -------------------- 검색 영역 -------------------- */
+.search-area { 
+  margin: 25px; 
+}
 input {
   padding: 8px 12px;
   width: 250px;
@@ -52,8 +73,11 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
-button:hover { background-color: #ffdb4d; }
+button:hover { 
+  background-color: #ffdb4d; 
+}
 
+/* -------------------- 실시간 급등/하락 -------------------- */
 .realtime-section {
   display: flex;
   justify-content: center;
@@ -68,31 +92,49 @@ button:hover { background-color: #ffdb4d; }
   background: #fffdf5;
 }
 
-.chart-section { width: 80%; margin: 40px auto; }
-canvas { width: 100% !important; max-height: 420px; }
-
-.live-info {
-  background: #fff9d6;
-  border: 1px solid gold;
-  border-radius: 10px;
-  padding: 10px;
-  width: 300px;
-  margin: 20px auto;
+/* -------------------- 차트 영역 -------------------- */
+.chart-section { 
+  width: 80%; 
+  margin: 40px auto; 
+}
+canvas {
+  width: 100% !important;
+  max-height: 450px;
+  margin: 25px 0;
+}
+h3 {
+  margin-top: 40px;
+  color: #222;
 }
 
+/* -------------------- 실시간 정보 박스 -------------------- */
+.live-info {
+  background-color: #fff7d1;
+  border: 2px solid #e1c700;
+  padding: 15px;
+  width: fit-content;
+  margin: 30px auto;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: background-color 0.4s, color 0.4s;
+}
+
+/* 상승 / 하락 색상 효과 */
+.live-info.up {
+  background-color: #e8ffea;
+  border-color: #22c55e;
+  color: #0f5132;
+}
+.live-info.down {
+  background-color: #ffe6e6;
+  border-color: #ef4444;
+  color: #7f1d1d;
+}
+
+/* -------------------- 푸터 -------------------- */
 footer {
   background-color: #fff8e1;
   padding: 15px;
   margin-top: 50px;
   font-size: 0.9rem;
-}
-canvas {
-  width: 100% !important;
-  max-height: 400px;
-  margin-top: 20px;
-}
-
-h3 {
-  margin-top: 40px;
-  color: #222;
 }
