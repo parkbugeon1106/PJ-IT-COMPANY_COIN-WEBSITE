@@ -8,9 +8,6 @@ const langPack = {
     chart: "BTC 실시간 그래프",
     searchPlaceholder: "코인명 (예: 비트코인, BTC)",
     searchButton: "검색",
-    price: "현재가",
-    volume: "거래량",
-    cap: "시가총액"
   },
   en: {
     gainers: "Top 3 Gaining Coins",
@@ -18,9 +15,6 @@ const langPack = {
     chart: "BTC Live Chart",
     searchPlaceholder: "Coin name (e.g. Bitcoin, BTC)",
     searchButton: "Search",
-    price: "Price",
-    volume: "Volume",
-    cap: "Market Cap"
   }
 };
 
@@ -33,16 +27,16 @@ document.getElementById("lang").addEventListener("change", (e) => {
   document.getElementById("chart-title").innerText = t.chart;
   document.getElementById("search-input").placeholder = t.searchPlaceholder;
   document.getElementById("search-btn").innerText = t.searchButton;
-  document.querySelector("label[for='price']").innerText = t.price;
 });
 
-// 📊 실시간 BTC WebSocket (1초 단위)
+// ✅ 실시간 BTC 그래프 (Binance WebSocket)
 let btcChart;
-let prices = [];
+let btcPrices = [];
 
 function startBTCStream() {
   const socket = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
   const ctx = document.getElementById("btcChart");
+
   btcChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -62,63 +56,60 @@ function startBTCStream() {
     }
   });
 
-  // 실시간 가격 수신
-  socket.onmessage = async (event) => {
+  socket.onmessage = (event) => {
     const trade = JSON.parse(event.data);
     const price = parseFloat(trade.p);
+    const rounded = Math.round(price / 100) * 100; // 100달러 단위 반올림
+    btcPrices.push(rounded);
+    if (btcPrices.length > 100) btcPrices.shift();
 
-    // 단위 조정 (100달러 단위로 반올림)
-    const rounded = Math.round(price / 100) * 100;
-
-    prices.push(rounded);
-    if (prices.length > 100) prices.shift();
-
-    btcChart.data.labels = prices.map((_, i) => i);
-    btcChart.data.datasets[0].data = prices;
+    btcChart.data.labels = btcPrices.map((_, i) => i);
+    btcChart.data.datasets[0].data = btcPrices;
     btcChart.update();
 
-    // 실시간 정보 갱신
     document.getElementById("price").innerText = `$${rounded.toLocaleString()}`;
-    await updateCoinInfo();
   };
 }
 
-// 📈 CoinGecko에서 거래량 & 시가총액 갱신
-async function updateCoinInfo() {
+// ✅ 거래량, 시가총액 (Binance REST API)
+async function updateMarketInfo() {
   try {
-    const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin");
+    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT");
     const data = await res.json();
-    const coin = data[0];
+    const vol = Math.round(parseFloat(data.quoteVolume) / 100) * 100;
+    const cap = Math.round(parseFloat(data.lastPrice) * parseFloat(data.volume) / 100) * 100;
 
-    const volume = Math.round(coin.total_volume / 100) * 100;
-    const cap = Math.round(coin.market_cap / 100) * 100;
-
-    document.getElementById("volume").innerText = `$${volume.toLocaleString()}`;
+    document.getElementById("volume").innerText = `$${vol.toLocaleString()}`;
     document.getElementById("marketcap").innerText = `$${cap.toLocaleString()}`;
-  } catch {
-    console.log("데이터 갱신 실패 (일시적 API 오류)");
+  } catch (err) {
+    console.log("Binance API 오류:", err);
   }
 }
 
-// 🪙 급등/하락 TOP3 코인
+// ✅ 급등 / 하락 TOP3 (Binance API)
 async function loadTopCoins() {
   try {
-    const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=100&page=1");
+    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
     const data = await res.json();
-    const gainers = [...data].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 3);
-    const losers = [...data].sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 3);
+
+    const sorted = [...data]
+      .filter(d => d.symbol.endsWith("USDT"))
+      .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
+
+    const gainers = sorted.slice(0, 3);
+    const losers = sorted.slice(-3).reverse();
 
     document.getElementById("top-gainers").innerHTML =
-      gainers.map(c => `<li>${c.name} (+${c.price_change_percentage_24h.toFixed(2)}%)</li>`).join("");
+      gainers.map(c => `<li>${c.symbol.replace("USDT", "")} (+${parseFloat(c.priceChangePercent).toFixed(2)}%)</li>`).join("");
 
     document.getElementById("top-losers").innerHTML =
-      losers.map(c => `<li>${c.name} (${c.price_change_percentage_24h.toFixed(2)}%)</li>`).join("");
+      losers.map(c => `<li>${c.symbol.replace("USDT", "")} (${parseFloat(c.priceChangePercent).toFixed(2)}%)</li>`).join("");
   } catch (e) {
     console.error("TOP3 데이터 불러오기 실패:", e);
   }
 }
 
-// 🔍 검색
+// ✅ 검색 기능
 document.getElementById("search-btn").addEventListener("click", () => {
   const name = document.getElementById("search-input").value.trim();
   if (name) window.location.href = `coin.html?name=${name}`;
@@ -126,5 +117,9 @@ document.getElementById("search-btn").addEventListener("click", () => {
 
 // 🟢 초기 실행
 startBTCStream();
+updateMarketInfo();
 loadTopCoins();
+
+// 반복 갱신
+setInterval(updateMarketInfo, 5000);
 setInterval(loadTopCoins, 30000);
