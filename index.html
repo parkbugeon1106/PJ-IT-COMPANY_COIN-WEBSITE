@@ -16,14 +16,14 @@
 
   <main>
     <section class="search-area">
-      <input id="search-input" type="text" placeholder="COIN을 검색하세요 (예: BTC, ETH)" />
+      <input id="search-input" type="text" placeholder="COIN을 검색하세요 (예: BTC, ETH, 비트코인)" />
       <button id="search-btn">검색</button>
     </section>
 
     <section class="news-section">
       <h2>실시간 코인 뉴스</h2>
       <ul id="news-list">
-        <li>최신 코인 뉴스 불러오는 중...</li>
+        <li>뉴스 로딩 중...</li>
       </ul>
     </section>
 
@@ -47,5 +47,21 @@
   <footer>
     © 2025 PJ IT COMPANY — All Rights Reserved.
   </footer>
+
+  <script>
+    // 뉴스 링크
+    const newsList = [
+      { title: "비트코인, 기관투자 유입으로 반등세", url: "https://www.coindeskkorea.com/" },
+      { title: "이더리움, 거래 수수료 급등세 지속", url: "https://kr.investing.com/crypto/ethereum" },
+      { title: "리플, SEC 재판 결과에 따른 급등 전망", url: "https://coinpan.com/" },
+      { title: "도지코인, 일론 머스크 발언 이후 거래량 폭증", url: "https://kr.cointelegraph.com/" }
+    ];
+
+    if (document.getElementById('news-list')) {
+      document.getElementById('news-list').innerHTML = newsList
+        .map(n => `<li><a href="${n.url}" target="_blank" style="color:blue;text-decoration:none;">${n.title}</a></li>`)
+        .join('');
+    }
+  </script>
 </body>
 </html>
