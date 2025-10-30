@@ -6,7 +6,6 @@
   <title>코인 상세 | PJ COMPANY COIN SITE</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="script.js"></script>
 </head>
 <body>
   <header>
@@ -25,12 +24,32 @@
     </section>
   </main>
 
+  <footer>
+    © 2025 PJ IT COMPANY — All Rights Reserved.
+  </footer>
+
   <script>
+    // ✅ 한글 → 영어 변환 매핑
+    const coinMap = {
+      "비트코인": "bitcoin",
+      "이더리움": "ethereum",
+      "리플": "ripple",
+      "도지코인": "dogecoin",
+      "솔라나": "solana",
+      "에이다": "cardano",
+      "폴카닷": "polkadot",
+      "트론": "tron",
+      "체인링크": "chainlink",
+      "라이트코인": "litecoin",
+      "비트코인캐시": "bitcoin-cash"
+    };
+
     // ✅ URL에서 코인 이름 추출
     const params = new URLSearchParams(window.location.search);
-    const coinName = params.get("name") || "bitcoin";
-    const displayName = coinName.toUpperCase();
+    let coinName = params.get("name") || "bitcoin";
+    if (coinMap[coinName]) coinName = coinMap[coinName]; // 한글 입력 시 영어 변환
 
+    const displayName = coinName.toUpperCase();
     document.getElementById("coin-name").innerText = displayName + " 실시간 그래프";
 
     let chartInstance;
@@ -54,6 +73,7 @@
           <p><b>전일 대비:</b> ${coin.price_change_percentage_24h.toFixed(2)}%</p>
           <p><b>거래량:</b> $${coin.total_volume.toLocaleString()}</p>
           <p><b>시가총액:</b> $${coin.market_cap.toLocaleString()}</p>
+          <p><b>시장 점유율:</b> ${coin.market_cap_change_percentage_24h.toFixed(2)}%</p>
         `;
 
         // 차트 업데이트
@@ -67,10 +87,18 @@
                 label: `${displayName}/USD (실시간)`,
                 data: prices,
                 borderColor: "#000",
-                backgroundColor: "rgba(255, 255, 0, 0.2)"
+                backgroundColor: "rgba(255, 255, 0, 0.2)",
+                pointRadius: 1.2
               }]
             },
-            options: { responsive: true, animation: false, scales: { y: { beginAtZero: false } } }
+            options: {
+              responsive: true,
+              animation: false,
+              scales: {
+                x: { display: false },
+                y: { beginAtZero: false }
+              }
+            }
           });
         } else {
           chartInstance.data.datasets[0].data = prices;
@@ -78,7 +106,8 @@
         }
       } catch (err) {
         console.error(err);
-        document.getElementById("coin-stats").innerHTML = `<p style="color:red;">데이터를 불러오지 못했습니다.</p>`;
+        document.getElementById("coin-stats").innerHTML =
+          `<p style="color:red;">데이터를 불러오지 못했습니다.</p>`;
       }
     }
 
