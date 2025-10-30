@@ -1,41 +1,72 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>코인 상세 | PJ COMPANY COIN SITE</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="coin.js"></script>
-</head>
-<body>
-  <header>
-    <div class="logo" onclick="window.location.href='index.html'">PJ IT COMPANY</div>
-    <div class="site-title">PJ COMPANY COIN SITE</div>
-    <div class="lang-toggle">
-      🌐 
-      <select id="lang">
-        <option value="ko">한국어</option>
-        <option value="en">English</option>
-      </select>
-    </div>
-  </header>
+let lang = "ko";
+const langPack = {
+  ko: { price: "현재가:", change: "변동률:", volume: "거래량(24h):", high: "최고가(24h):", low: "최저가(24h):" },
+  en: { price: "Price:", change: "Change:", volume: "Volume(24h):", high: "High(24h):", low: "Low(24h):" }
+};
 
-  <main>
-    <section class="coin-info">
-      <h2 id="coin-title">로딩 중...</h2>
-      <canvas id="coinChart"></canvas>
+const params = new URLSearchParams(window.location.search);
+let coinName = params.get("name") || "BTC";
+coinName = coinName.toUpperCase();
 
-      <div class="live-info">
-        <p><b id="price-label">현재가:</b> <span id="price">-</span> USD</p>
-        <p><b id="change-label">변동률:</b> <span id="change">-</span>%</p>
-        <p><b id="volume-label">거래량(24h):</b> <span id="volume">-</span> USD</p>
-        <p><b id="high-label">최고가(24h):</b> <span id="high">-</span> USD</p>
-        <p><b id="low-label">최저가(24h):</b> <span id="low">-</span> USD</p>
-      </div>
-    </section>
-  </main>
+document.getElementById("coin-title").innerText = `${coinName} 실시간 그래프`;
 
-  <footer>© 2025 PJ IT COMPANY — All Rights Reserved.</footer>
-</body>
-</html>
+document.getElementById("lang").addEventListener("change", (e) => {
+  lang = e.target.value;
+  const t = langPack[lang];
+  for (const k in t) document.getElementById(`${k}-label`).innerText = t[k];
+});
+
+let chart;
+let prices = [];
+
+function startLiveChart() {
+  const symbol = `${coinName}USDT`;
+  const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`);
+  const ctx = document.getElementById("coinChart");
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: { labels: [], datasets: [{ label: `${coinName}/USDT`, data: [], borderColor: "#000", backgroundColor: "rgba(255,255,0,0.2)", pointRadius: 0 }] },
+    options: {
+      animation: false,
+      responsive: true,
+      scales: {
+        x: { title: { display: true, text: "시간(초)" } },
+        y: { title: { display: true, text: "가격(USD)" }, beginAtZero: false }
+      }
+    }
+  });
+
+  socket.onmessage = (event) => {
+    const trade = JSON.parse(event.data);
+    const price = parseFloat(trade.p);
+    const rounded = Math.round(price / 100) * 100;
+    const time = new Date().toLocaleTimeString().split(" ")[0];
+    prices.push({ x: time, y: rounded });
+    if (prices.length > 60) prices.shift();
+
+    chart.data.labels = prices.map(p => p.x);
+    chart.data.datasets[0].data = prices.map(p => p.y);
+    chart.update();
+    document.getElementById("price").innerText = `$${rounded.toLocaleString()}`;
+  };
+}
+
+async function updateStats() {
+  const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coinName}USDT`);
+  const data = await res.json();
+  const change = parseFloat(data.priceChangePercent).toFixed(2);
+  const vol = Math.round(parseFloat(data.quoteVolume) / 100) * 100;
+  const high = Math.round(parseFloat(data.highPrice) / 100) * 100;
+  const low = Math.round(parseFloat(data.lowPrice) / 100) * 100;
+
+  document.getElementById("change").innerText = change;
+  document.getElementById("volume").innerText = `$${vol.toLocaleString()}`;
+  document.getElementById("high").innerText = `$${high.toLocaleString()}`;
+  document.getElementById("low").innerText = `$${low.toLocaleString()}`;
+  document.getElementById("change").style.color = change >= 0 ? "green" : "red";
+}
+
+startLiveChart();
+updateStats();
+setInterval(updateStats, 1000);
