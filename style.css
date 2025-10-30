@@ -1,0 +1,95 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: white;
+  color: black;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  border-bottom: 2px solid #eee;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: black;
+}
+
+.site-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.search-area {
+  margin: 30px auto;
+  text-align: center;
+}
+
+#search-input {
+  width: 300px;
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+}
+
+#search-btn {
+  background: yellow;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.news-section {
+  width: 90%;
+  margin: 20px auto;
+}
+
+.news-section ul li {
+  list-style: none;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.realtime-section {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 30px;
+}
+
+.coin-box {
+  width: 40%;
+  background: #fffbe6;
+  border: 2px solid #f0d900;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.chart-section {
+  width: 80%;
+  margin: 50px auto;
+  text-align: center;
+}
+
+canvas {
+  width: 100%;
+  height: 400px;
+}
+
+footer {
+  text-align: center;
+  padding: 15px;
+  border-top: 2px solid #ddd;
+  font-size: 0.9rem;
+  color: #555;
+}
