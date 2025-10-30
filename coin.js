@@ -4,11 +4,8 @@ coinName = coinName.toUpperCase();
 
 document.getElementById("coin-title").innerText = `${coinName} 실시간 데이터`;
 
-// 실시간 그래프용
 let realtimeChart;
 let realtimePrices = [];
-
-// 전체(24시간) 그래프용
 let fullChart;
 
 // ✅ 실시간 그래프 (1초 단위)
@@ -19,12 +16,21 @@ function startRealtimeChart() {
 
   realtimeChart = new Chart(ctx, {
     type: "line",
-    data: { labels: [], datasets: [{ label: `${symbol}/USDT (실시간)`, data: [], borderColor: "#000", backgroundColor: "rgba(255,255,0,0.3)", pointRadius: 0 }] },
+    data: {
+      labels: [],
+      datasets: [{
+        label: `${symbol}/USDT (실시간)`,
+        data: [],
+        borderColor: "#000",
+        backgroundColor: "rgba(255,255,0,0.3)",
+        pointRadius: 0
+      }]
+    },
     options: {
       animation: false,
       responsive: true,
       scales: {
-        x: { title: { display: true, text: "가격(10 USD 단위)" } },
+        x: { title: { display: true, text: "가격 (10 USD 단위)" } },
         y: { title: { display: true, text: "가격(USD)" } }
       }
     }
@@ -33,8 +39,8 @@ function startRealtimeChart() {
   socket.onmessage = (event) => {
     const trade = JSON.parse(event.data);
     const price = parseFloat(trade.p);
-    const rounded = Math.round(price / 10) * 10; // 10달러 단위 반올림
-    const xValue = rounded; // X값도 10달러 단위
+    const rounded = Math.round(price / 10) * 10;
+    const xValue = rounded;
     realtimePrices.push({ x: xValue, y: rounded });
     if (realtimePrices.length > 60) realtimePrices.shift();
 
@@ -46,17 +52,36 @@ function startRealtimeChart() {
   };
 }
 
-// ✅ 전체(24시간) 그래프 (1분 간격 데이터)
+// ✅ 전체(전체기간) 그래프 (상장 이후 전체 데이터)
 async function loadFullChart() {
-  const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName.toLowerCase()}/market_chart?vs_currency=usd&days=1`);
+  const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName.toLowerCase()}/market_chart?vs_currency=usd&days=max`);
   const data = await res.json();
-  const prices = data.prices.map(p => ({ x: new Date(p[0]).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }), y: Math.round(p[1] / 10) * 10 }));
+  const prices = data.prices.map(p => ({
+    x: new Date(p[0]).toLocaleDateString("ko-KR", { year: "2-digit", month: "short", day: "numeric" }),
+    y: Math.round(p[1] / 10) * 10
+  }));
 
   const ctx = document.getElementById("fullChart");
   fullChart = new Chart(ctx, {
     type: "line",
-    data: { labels: prices.map(p => p.x), datasets: [{ label: `${coinName}/USD (24시간)`, data: prices.map(p => p.y), borderColor: "blue", backgroundColor: "rgba(100,150,255,0.2)", pointRadius: 0 }] },
-    options: { responsive: true, animation: false, scales: { x: { title: { display: true, text: "시간" } }, y: { title: { display: true, text: "가격(USD)" } } } }
+    data: {
+      labels: prices.map(p => p.x),
+      datasets: [{
+        label: `${coinName}/USD (전체 기간)`,
+        data: prices.map(p => p.y),
+        borderColor: "blue",
+        backgroundColor: "rgba(100,150,255,0.2)",
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      scales: {
+        x: { title: { display: true, text: "날짜" } },
+        y: { title: { display: true, text: "가격(USD)" } }
+      }
+    }
   });
 }
 
@@ -77,6 +102,7 @@ async function updateStats() {
   document.getElementById("change").style.color = change >= 0 ? "green" : "red";
 }
 
+// 시작
 startRealtimeChart();
 loadFullChart();
 updateStats();
