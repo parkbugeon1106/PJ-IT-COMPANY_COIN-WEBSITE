@@ -1,38 +1,102 @@
-// ✅ 한글 → 영어 심볼 매핑
-const coinMap = {
-  "비트코인": "BTC",
-  "이더리움": "ETH",
-  "솔라나": "SOL",
-  "리플": "XRP",
-  "도지코인": "DOGE",
-  "카르다노": "ADA",
-  "폴카닷": "DOT",
-  "폴리곤": "MATIC",
-  "아발란체": "AVAX",
-  "라이트코인": "LTC",
-  "테더": "USDT",
-  "비트코인캐시": "BCH",
-  "체인링크": "LINK",
-  "트론": "TRX",
-  "이더리움클래식": "ETC"
+// ✅ 전역 변수
+let coinMap = {};
+let coinName;
+
+// ✅ 기본 한글 → CoinGecko ID 매핑 (대표 코인)
+const baseMap = {
+  "비트코인": "bitcoin",
+  "이더리움": "ethereum",
+  "솔라나": "solana",
+  "리플": "ripple",
+  "도지코인": "dogecoin",
+  "카르다노": "cardano",
+  "폴카닷": "polkadot",
+  "폴리곤": "matic-network",
+  "아발란체": "avalanche-2",
+  "라이트코인": "litecoin",
+  "비트코인캐시": "bitcoin-cash",
+  "체인링크": "chainlink",
+  "트론": "tron",
+  "이더리움클래식": "ethereum-classic"
 };
 
-// ✅ 코인 이름 가져오기
-const params = new URLSearchParams(window.location.search);
-let rawName = params.get("name") || "BTC";
-let coinName = coinMap[rawName] || rawName.toUpperCase();
+// ✅ Coin list 로드 (최대 13,000개)
+async function loadCoinList() {
+  try {
+    // 이미 캐시에 저장된 경우 빠르게 로드
+    const cached = localStorage.getItem("coinMapCache");
+    if (cached) {
+      coinMap = JSON.parse(cached);
+      console.log(`⚡ Cached coin list loaded (${Object.keys(coinMap).length} entries)`);
+      initPage();
+      // 백그라운드에서 최신 데이터 갱신
+      fetchCoinList();
+      return;
+    }
 
-// ✅ 제목 표시
-document.getElementById("coin-title").innerText = `${coinName} 실시간 데이터`;
+    // 최초 로드 시 서버에서 직접 가져오기
+    await fetchCoinList();
+    initPage();
+  } catch (err) {
+    console.error("❌ 코인 리스트 로드 실패:", err);
+    coinMap = baseMap;
+    initPage();
+  }
+}
+
+// ✅ CoinGecko에서 전체 코인 리스트 불러오기
+async function fetchCoinList() {
+  try {
+    const res = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=false");
+    const data = await res.json();
+    console.log(`✅ Coin list fetched (${data.length} items)`);
+
+    data.forEach(c => {
+      // 영어명, 심볼 모두 추가
+      coinMap[c.id.toLowerCase()] = c.id;
+      coinMap[c.symbol.toUpperCase()] = c.id;
+      coinMap[c.symbol.toLowerCase()] = c.id;
+      coinMap[c.name.toLowerCase()] = c.id;
+    });
+
+    // 한글 매핑도 병합
+    Object.entries(baseMap).forEach(([kr, en]) => {
+      coinMap[kr.toLowerCase()] = en;
+    });
+
+    // 캐시에 저장 (7일 유지)
+    localStorage.setItem("coinMapCache", JSON.stringify(coinMap));
+    localStorage.setItem("coinMapCacheTime", Date.now());
+    console.log("💾 Coin list cached locally");
+  } catch (err) {
+    console.error("❌ CoinGecko 데이터 가져오기 실패:", err);
+  }
+}
+
+// ✅ 페이지 초기화
+function initPage() {
+  const params = new URLSearchParams(window.location.search);
+  let raw = params.get("name") || "bitcoin";
+  const key = raw.toLowerCase();
+  const id = coinMap[key] || coinMap[raw.toUpperCase()] || "bitcoin";
+  coinName = id;
+
+  document.getElementById("coin-title").innerText = `${raw.toUpperCase()} 실시간 데이터`;
+
+  startRealtimeChart();
+  loadFullChart();
+  updateStats();
+  setInterval(updateStats, 3000);
+}
 
 let realtimeChart;
 let fullChart;
-let latestPrice = 0;
 
-// ✅ 실시간 그래프
+// ✅ 실시간 그래프 (Binance 기준)
 function startRealtimeChart() {
-  const symbol = `${coinName}USDT`;
-  const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`);
+  const binanceSymbol =
+    coinName.replace(/-|\s/g, "").replace("bitcoin", "BTC").replace("ethereum", "ETH").toUpperCase() + "USDT";
+  const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${binanceSymbol.toLowerCase()}@trade`);
   const ctx = document.getElementById("realtimeChart").getContext("2d");
   let prices = [];
 
@@ -41,10 +105,10 @@ function startRealtimeChart() {
     data: {
       labels: [],
       datasets: [{
-        label: `${symbol} / USD (실시간)`,
+        label: `${binanceSymbol} / USD (실시간)`,
         data: [],
         borderColor: "#000",
-        backgroundColor: "rgba(255,255,0,0.2)",
+        backgroundColor: "rgba(255,255,0,0.3)",
         pointRadius: 0,
         tension: 0.15
       }]
@@ -53,7 +117,7 @@ function startRealtimeChart() {
       animation: false,
       responsive: true,
       scales: {
-        x: { title: { display: true, text: "시간(초 단위)" } },
+        x: { title: { display: true, text: "시간" } },
         y: { title: { display: true, text: "가격(USD)" } }
       }
     }
@@ -62,13 +126,11 @@ function startRealtimeChart() {
   socket.onmessage = (event) => {
     const trade = JSON.parse(event.data);
     const price = parseFloat(trade.p);
-    if (isNaN(price)) return; // 데이터가 없으면 무시
-
-    latestPrice = price;
-    const timeLabel = new Date().toLocaleTimeString("ko-KR", { minute: "2-digit", second: "2-digit" });
+    if (!price) return;
+    const timeLabel = new Date().toLocaleTimeString("ko-KR", { second: "2-digit" });
 
     prices.push({ x: timeLabel, y: price });
-    if (prices.length > 100) prices.shift();
+    if (prices.length > 80) prices.shift();
 
     realtimeChart.data.labels = prices.map(p => p.x);
     realtimeChart.data.datasets[0].data = prices.map(p => p.y);
@@ -76,19 +138,14 @@ function startRealtimeChart() {
 
     document.getElementById("price").innerText = `$${price.toLocaleString()}`;
   };
-
-  socket.onerror = (err) => {
-    console.error("WebSocket 오류:", err);
-  };
 }
 
-// ✅ 전체 그래프 (최근 1년 기준)
+// ✅ CoinGecko 전체 그래프 (최근 1년)
 async function loadFullChart() {
   try {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName.toLowerCase()}/market_chart?vs_currency=usd&days=365`);
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName}/market_chart?vs_currency=usd&days=365`);
     const data = await res.json();
-
-    if (!data.prices) throw new Error("가격 데이터 없음");
+    if (!data.prices) throw new Error("데이터 없음");
 
     const prices = data.prices.map(p => ({
       x: new Date(p[0]).toLocaleDateString("ko-KR", { month: "short", day: "numeric" }),
@@ -101,7 +158,7 @@ async function loadFullChart() {
       data: {
         labels: prices.map(p => p.x),
         datasets: [{
-          label: `${coinName} / USD (1년 그래프)`,
+          label: `${coinName.toUpperCase()} / USD (1년 그래프)`,
           data: prices.map(p => p.y),
           borderColor: "#007bff",
           backgroundColor: "rgba(0,123,255,0.1)",
@@ -109,27 +166,21 @@ async function loadFullChart() {
           tension: 0.25
         }]
       },
-      options: {
-        responsive: true,
-        animation: false,
-        scales: {
-          x: { title: { display: true, text: "날짜" } },
-          y: { title: { display: true, text: "가격(USD)" } }
-        }
-      }
+      options: { responsive: true, animation: false }
     });
   } catch (err) {
-    console.error("전체 그래프 불러오기 실패:", err);
+    console.error("전체 그래프 오류:", err);
   }
 }
 
-// ✅ 실시간 정보 표시
+// ✅ 시가/변동률/거래량 등 정보
 async function updateStats() {
   try {
-    const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coinName}USDT`);
+    const symbol = coinName.replace(/-|\s/g, "").toUpperCase() + "USDT";
+    const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
     const data = await res.json();
 
-    if (!data || !data.lastPrice) throw new Error("API 응답 없음");
+    if (!data || !data.lastPrice) return;
 
     const change = parseFloat(data.priceChangePercent).toFixed(2);
     const vol = parseFloat(data.quoteVolume);
@@ -142,23 +193,13 @@ async function updateStats() {
     document.getElementById("low").innerText = `$${low.toLocaleString()}`;
     document.getElementById("change").style.color = change >= 0 ? "green" : "red";
 
-    const infoBox = document.querySelector(".live-info");
-    if (change >= 0) {
-      infoBox.classList.add("up");
-      infoBox.classList.remove("down");
-    } else {
-      infoBox.classList.add("down");
-      infoBox.classList.remove("up");
-    }
-
+    const box = document.querySelector(".live-info");
+    box.classList.remove("up", "down");
+    box.classList.add(change >= 0 ? "up" : "down");
   } catch (err) {
-    console.error("정보 업데이트 실패:", err);
-    document.getElementById("volume").innerText = "데이터 오류";
+    console.error("업데이트 오류:", err);
   }
 }
 
 // ✅ 실행
-startRealtimeChart();
-loadFullChart();
-updateStats();
-setInterval(updateStats, 2000);
+loadCoinList();
