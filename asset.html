@@ -17,11 +17,39 @@
     <p>실물 자산을 기반으로 한 코인 종류를 선택하세요.</p>
 
     <div class="category-box">
-      <div class="option" onclick="alert('부동산 기반 코인 페이지 준비 중')">부동산</div>
-      <div class="option" onclick="alert('예술품 기반 코인 페이지 준비 중')">예술품</div>
+      <div class="option" onclick="showCategory('realestate')">🏠 부동산</div>
+      <div class="option" onclick="showCategory('art')">🎨 예술품</div>
     </div>
+
+    <div id="category-content" style="margin-top:30px;"></div>
   </main>
 
   <footer>© 2025 PJ IT COMPANY</footer>
+
+  <script>
+    function showCategory(type) {
+      const box = document.getElementById("category-content");
+      let html = "";
+      if (type === "realestate") {
+        html = `
+          <h3>🏠 부동산 기반 코인</h3>
+          <ul>
+            <li>Propy (PRO) — 부동산 거래 플랫폼</li>
+            <li>Atlant (ATL) — 부동산 토큰화 프로젝트</li>
+            <li>LABS Group (LABS) — 리조트·호텔 투자형 토큰</li>
+          </ul>`;
+      } else if (type === "art") {
+        html = `
+          <h3>🎨 예술품 기반 코인</h3>
+          <ul>
+            <li>Maecenas (ART) — 미술품 자산 거래 플랫폼</li>
+            <li>Vera (VERA) — NFT·디지털 아트 금융 서비스</li>
+            <li>ArtCoin (ARTC) — 실물 예술 작품 자산화 프로젝트</li>
+          </ul>`;
+      }
+      box.innerHTML = html;
+      box.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
 </body>
 </html>
