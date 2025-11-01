@@ -1,7 +1,28 @@
+// ✅ 한글 → 영어 심볼 매핑
+const coinMap = {
+  "비트코인": "BTC",
+  "이더리움": "ETH",
+  "솔라나": "SOL",
+  "리플": "XRP",
+  "도지코인": "DOGE",
+  "카르다노": "ADA",
+  "폴카닷": "DOT",
+  "폴리곤": "MATIC",
+  "아발란체": "AVAX",
+  "라이트코인": "LTC",
+  "테더": "USDT",
+  "비트코인캐시": "BCH",
+  "체인링크": "LINK",
+  "트론": "TRX",
+  "이더리움클래식": "ETC"
+};
+
 // ✅ 코인 이름 가져오기
 const params = new URLSearchParams(window.location.search);
-let coinName = (params.get("name") || "BTC").toUpperCase();
+let rawName = params.get("name") || "BTC";
+let coinName = coinMap[rawName] || rawName.toUpperCase();
 
+// ✅ 제목 표시
 document.getElementById("coin-title").innerText = `${coinName} 실시간 데이터`;
 
 let realtimeChart;
@@ -12,7 +33,7 @@ let latestPrice = 0;
 function startRealtimeChart() {
   const symbol = `${coinName}USDT`;
   const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`);
-  const ctx = document.getElementById("realtimeChart");
+  const ctx = document.getElementById("realtimeChart").getContext("2d");
   let prices = [];
 
   realtimeChart = new Chart(ctx, {
@@ -25,19 +46,15 @@ function startRealtimeChart() {
         borderColor: "#000",
         backgroundColor: "rgba(255,255,0,0.2)",
         pointRadius: 0,
-        tension: 0.1
+        tension: 0.15
       }]
     },
     options: {
       animation: false,
       responsive: true,
       scales: {
-        x: {
-          title: { display: true, text: "가격 × 0.01" },
-        },
-        y: {
-          title: { display: true, text: "가격 (USD)" },
-        }
+        x: { title: { display: true, text: "시간(초 단위)" } },
+        y: { title: { display: true, text: "가격(USD)" } }
       }
     }
   });
@@ -45,12 +62,13 @@ function startRealtimeChart() {
   socket.onmessage = (event) => {
     const trade = JSON.parse(event.data);
     const price = parseFloat(trade.p);
-    latestPrice = price;
+    if (isNaN(price)) return; // 데이터가 없으면 무시
 
-    // ✅ X값: 실시간 가격 × 0.01
-    const xValue = Math.round(price * 0.01);
-    prices.push({ x: xValue, y: price });
-    if (prices.length > 200) prices.shift();
+    latestPrice = price;
+    const timeLabel = new Date().toLocaleTimeString("ko-KR", { minute: "2-digit", second: "2-digit" });
+
+    prices.push({ x: timeLabel, y: price });
+    if (prices.length > 100) prices.shift();
 
     realtimeChart.data.labels = prices.map(p => p.x);
     realtimeChart.data.datasets[0].data = prices.map(p => p.y);
@@ -58,32 +76,37 @@ function startRealtimeChart() {
 
     document.getElementById("price").innerText = `$${price.toLocaleString()}`;
   };
+
+  socket.onerror = (err) => {
+    console.error("WebSocket 오류:", err);
+  };
 }
 
-// ✅ 전체 그래프 (전체 기간)
+// ✅ 전체 그래프 (최근 1년 기준)
 async function loadFullChart() {
   try {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName.toLowerCase()}/market_chart?vs_currency=usd&days=max`);
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinName.toLowerCase()}/market_chart?vs_currency=usd&days=365`);
     const data = await res.json();
-    if (!data.prices) throw new Error("데이터 없음");
+
+    if (!data.prices) throw new Error("가격 데이터 없음");
 
     const prices = data.prices.map(p => ({
-      x: new Date(p[0]).toLocaleDateString("ko-KR", { year: "2-digit", month: "short" }),
+      x: new Date(p[0]).toLocaleDateString("ko-KR", { month: "short", day: "numeric" }),
       y: p[1]
     }));
 
-    const ctx = document.getElementById("fullChart");
+    const ctx = document.getElementById("fullChart").getContext("2d");
     fullChart = new Chart(ctx, {
       type: "line",
       data: {
         labels: prices.map(p => p.x),
         datasets: [{
-          label: `${coinName}/USD (전체 그래프)`,
+          label: `${coinName} / USD (1년 그래프)`,
           data: prices.map(p => p.y),
           borderColor: "#007bff",
           backgroundColor: "rgba(0,123,255,0.1)",
           pointRadius: 0,
-          tension: 0.2
+          tension: 0.25
         }]
       },
       options: {
@@ -91,7 +114,7 @@ async function loadFullChart() {
         animation: false,
         scales: {
           x: { title: { display: true, text: "날짜" } },
-          y: { title: { display: true, text: "가격 (USD)" } }
+          y: { title: { display: true, text: "가격(USD)" } }
         }
       }
     });
@@ -106,6 +129,8 @@ async function updateStats() {
     const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coinName}USDT`);
     const data = await res.json();
 
+    if (!data || !data.lastPrice) throw new Error("API 응답 없음");
+
     const change = parseFloat(data.priceChangePercent).toFixed(2);
     const vol = parseFloat(data.quoteVolume);
     const high = parseFloat(data.highPrice);
@@ -117,7 +142,6 @@ async function updateStats() {
     document.getElementById("low").innerText = `$${low.toLocaleString()}`;
     document.getElementById("change").style.color = change >= 0 ? "green" : "red";
 
-    // ✅ 상승/하락 색상 효과 (CSS 클래스 연동)
     const infoBox = document.querySelector(".live-info");
     if (change >= 0) {
       infoBox.classList.add("up");
@@ -137,4 +161,4 @@ async function updateStats() {
 startRealtimeChart();
 loadFullChart();
 updateStats();
-setInterval(updateStats, 1500);
+setInterval(updateStats, 2000);
