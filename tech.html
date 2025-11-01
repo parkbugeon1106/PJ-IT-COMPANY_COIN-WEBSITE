@@ -17,12 +17,50 @@
     <p>기술적 목적을 가진 코인 종류를 선택하세요.</p>
 
     <div class="category-box">
-      <div class="option" onclick="window.location.href='tech-platform.html'">플랫폼</div>
-      <div class="option" onclick="window.location.href='tech-utility.html'">유틸리티</div>
-      <div class="option" onclick="window.location.href='tech-security.html'">보안</div>
+      <div class="option" onclick="showCategory('platform')">플랫폼</div>
+      <div class="option" onclick="showCategory('utility')">유틸리티</div>
+      <div class="option" onclick="showCategory('security')">보안</div>
     </div>
+
+    <div id="category-content" style="margin-top:30px;"></div>
   </main>
 
   <footer>© 2025 PJ IT COMPANY</footer>
+
+  <script>
+    function showCategory(type) {
+      const box = document.getElementById("category-content");
+      let html = "";
+      if (type === "platform") {
+        html = `
+          <h3>🏗 플랫폼 코인</h3>
+          <ul>
+            <li>Ethereum (이더리움)</li>
+            <li>Solana (솔라나)</li>
+            <li>Polkadot (폴카닷)</li>
+            <li>Cardano (카르다노)</li>
+          </ul>`;
+      } else if (type === "utility") {
+        html = `
+          <h3>🧩 유틸리티 코인</h3>
+          <ul>
+            <li>Chainlink (체인링크)</li>
+            <li>Uniswap (유니스왑)</li>
+            <li>Aave (아베)</li>
+            <li>The Sandbox (샌드박스)</li>
+          </ul>`;
+      } else if (type === "security") {
+        html = `
+          <h3>🔒 보안 코인</h3>
+          <ul>
+            <li>Monero (모네로)</li>
+            <li>Zcash (제트캐시)</li>
+            <li>Verge (버지)</li>
+          </ul>`;
+      }
+      box.innerHTML = html;
+      box.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
 </body>
 </html>
