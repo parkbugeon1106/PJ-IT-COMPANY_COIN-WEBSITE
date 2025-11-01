@@ -88,3 +88,26 @@ footer {
   margin-top: 30px;
   font-size: 0.9rem;
 }
+.category-box {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin: 40px auto;
+  flex-wrap: wrap;
+}
+
+.option {
+  background: #fff8e1;
+  border: 2px solid gold;
+  border-radius: 12px;
+  padding: 40px 60px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.option:hover {
+  background: gold;
+  color: #000;
+  transform: scale(1.05);
+}
