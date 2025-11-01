@@ -7,49 +7,64 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <div class="logo" onclick="window.location.href='index.html'">PJ IT COMPANY</div>
-    <div class="site-title">자산 기반 코인</div>
-  </header>
+<header>
+  <div class="logo" onclick="window.location.href='index.html'">PJ IT COMPANY</div>
+  <div class="site-title">자산 기반 코인</div>
+</header>
 
-  <main>
-    <h2>자산 기반 코인 분류</h2>
-    <p>실물 자산을 기반으로 한 코인 종류를 선택하세요.</p>
+<main>
+  <h2>자산 기반 코인 분류</h2>
+  <p>실물 자산을 기반으로 한 코인 종류를 선택하세요.</p>
 
-    <div class="category-box">
-      <div class="option" onclick="showCategory('realestate')">🏠 부동산</div>
-      <div class="option" onclick="showCategory('art')">🎨 예술품</div>
-    </div>
+  <div class="category-box">
+    <div class="option" onclick="loadCoins('realestate')">부동산</div>
+    <div class="option" onclick="loadCoins('art')">예술품</div>
+  </div>
 
-    <div id="category-content" style="margin-top:30px;"></div>
-  </main>
+  <div id="coin-list" style="margin-top:40px;"></div>
+</main>
 
-  <footer>© 2025 PJ IT COMPANY</footer>
+<footer>© 2025 PJ IT COMPANY</footer>
 
-  <script>
-    function showCategory(type) {
-      const box = document.getElementById("category-content");
-      let html = "";
-      if (type === "realestate") {
-        html = `
-          <h3>🏠 부동산 기반 코인</h3>
-          <ul>
-            <li>Propy (PRO) — 부동산 거래 플랫폼</li>
-            <li>Atlant (ATL) — 부동산 토큰화 프로젝트</li>
-            <li>LABS Group (LABS) — 리조트·호텔 투자형 토큰</li>
-          </ul>`;
-      } else if (type === "art") {
-        html = `
-          <h3>🎨 예술품 기반 코인</h3>
-          <ul>
-            <li>Maecenas (ART) — 미술품 자산 거래 플랫폼</li>
-            <li>Vera (VERA) — NFT·디지털 아트 금융 서비스</li>
-            <li>ArtCoin (ARTC) — 실물 예술 작품 자산화 프로젝트</li>
-          </ul>`;
-      }
-      box.innerHTML = html;
-      box.scrollIntoView({ behavior: "smooth" });
+<script>
+async function loadCoins(type) {
+  const box = document.getElementById("coin-list");
+  box.innerHTML = "<p>⏳ 데이터를 불러오는 중...</p>";
+
+  const categoryMap = {
+    realestate: "real-estate",
+    art: "nft"
+  };
+
+  const cat = categoryMap[type] || "real-estate";
+  try {
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=15&category=${cat}`);
+    const data = await res.json();
+
+    if (!data || !data.length) {
+      box.innerHTML = "<p>⚠️ 해당 코인 데이터를 불러올 수 없습니다.</p>";
+      return;
     }
-  </script>
+
+    box.innerHTML = `
+      <h3>📊 ${type.toUpperCase()} 코인 목록 (${data.length}개)</h3>
+      <table style="margin:auto;border-collapse:collapse;">
+        <tr><th>코인명</th><th>가격(USD)</th><th>변동률(24h)</th></tr>
+        ${data.map(c => `
+          <tr style="border-bottom:1px solid #ddd;">
+            <td>${c.name} (${c.symbol.toUpperCase()})</td>
+            <td>$${c.current_price.toLocaleString()}</td>
+            <td style="color:${c.price_change_percentage_24h >= 0 ? 'green':'red'}">
+              ${c.price_change_percentage_24h?.toFixed(2) || 0}%
+            </td>
+          </tr>
+        `).join("")}
+      </table>`;
+    box.scrollIntoView({ behavior: "smooth" });
+  } catch (err) {
+    box.innerHTML = `<p>❌ 데이터 오류: ${err.message}</p>`;
+  }
+}
+</script>
 </body>
 </html>
