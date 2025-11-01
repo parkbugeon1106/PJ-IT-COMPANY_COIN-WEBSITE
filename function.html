@@ -17,12 +17,40 @@
     <p>특정 기능에 초점을 둔 코인 종류를 선택하세요.</p>
 
     <div class="category-box">
-      <div class="option" onclick="alert('지불 결제 코인 페이지 준비 중')">지불 결제 코인</div>
-      <div class="option" onclick="alert('스테이블 코인 페이지 준비 중')">스테이블 코인</div>
+      <div class="option" onclick="showCategory('payment')">💳 지불 결제 코인</div>
+      <div class="option" onclick="showCategory('stable')">💰 스테이블 코인</div>
     </div>
+
+    <div id="category-content" style="margin-top:30px;"></div>
   </main>
 
   <footer>© 2025 PJ IT COMPANY</footer>
+
+  <script>
+    function showCategory(type) {
+      const box = document.getElementById("category-content");
+      let html = "";
+      if (type === "payment") {
+        html = `
+          <h3>💳 지불 결제 코인</h3>
+          <ul>
+            <li>Bitcoin (BTC) — 최초의 결제용 암호화폐</li>
+            <li>Litecoin (LTC) — 빠른 결제 속도를 가진 코인</li>
+            <li>Dash (DASH) — 익명성 기반 결제 시스템</li>
+            <li>Nano (NANO) — 수수료 없는 실시간 결제</li>
+          </ul>`;
+      } else if (type === "stable") {
+        html = `
+          <h3>💰 스테이블 코인</h3>
+          <ul>
+            <li>Tether (USDT) — 달러 연동형 대표 스테이블 코인</li>
+            <li>USD Coin (USDC) — 투명한 회계 기반 스테이블 코인</li>
+            <li>DAI — 탈중앙화 스테이블 코인 (MakerDAO)</li>
+          </ul>`;
+      }
+      box.innerHTML = html;
+      box.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
 </body>
 </html>
-
