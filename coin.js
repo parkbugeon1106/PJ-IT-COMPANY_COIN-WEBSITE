@@ -2,7 +2,30 @@
 let coinMap = {};
 let coinName;
 
-// ✅ 기본 한글 → CoinGecko ID 매핑 (대표 코인)
+// ✅ CoinGecko → Binance 심볼 매핑
+// Binance에서 실제 존재하는 심볼만 정확히 매칭 (2025 기준)
+const binanceMap = {
+  "bitcoin": "BTC",
+  "ethereum": "ETH",
+  "solana": "SOL",
+  "ripple": "XRP",
+  "dogecoin": "DOGE",
+  "cardano": "ADA",
+  "polkadot": "DOT",
+  "matic-network": "MATIC",
+  "avalanche-2": "AVAX",
+  "litecoin": "LTC",
+  "bitcoin-cash": "BCH",
+  "chainlink": "LINK",
+  "tron": "TRX",
+  "ethereum-classic": "ETC",
+  "stellar": "XLM",
+  "vechain": "VET",
+  "uniswap": "UNI",
+  "cosmos": "ATOM"
+};
+
+// ✅ 기본 한글 → CoinGecko ID 매핑
 const baseMap = {
   "비트코인": "bitcoin",
   "이더리움": "ethereum",
@@ -20,21 +43,17 @@ const baseMap = {
   "이더리움클래식": "ethereum-classic"
 };
 
-// ✅ Coin list 로드 (최대 13,000개)
+// ✅ 전체 코인 리스트 로드 (CoinGecko API)
 async function loadCoinList() {
   try {
-    // 이미 캐시에 저장된 경우 빠르게 로드
     const cached = localStorage.getItem("coinMapCache");
     if (cached) {
       coinMap = JSON.parse(cached);
       console.log(`⚡ Cached coin list loaded (${Object.keys(coinMap).length} entries)`);
       initPage();
-      // 백그라운드에서 최신 데이터 갱신
-      fetchCoinList();
+      fetchCoinList(); // 백그라운드 갱신
       return;
     }
-
-    // 최초 로드 시 서버에서 직접 가져오기
     await fetchCoinList();
     initPage();
   } catch (err) {
@@ -44,7 +63,7 @@ async function loadCoinList() {
   }
 }
 
-// ✅ CoinGecko에서 전체 코인 리스트 불러오기
+// ✅ CoinGecko 전체 리스트 가져오기
 async function fetchCoinList() {
   try {
     const res = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=false");
@@ -52,19 +71,16 @@ async function fetchCoinList() {
     console.log(`✅ Coin list fetched (${data.length} items)`);
 
     data.forEach(c => {
-      // 영어명, 심볼 모두 추가
       coinMap[c.id.toLowerCase()] = c.id;
       coinMap[c.symbol.toUpperCase()] = c.id;
       coinMap[c.symbol.toLowerCase()] = c.id;
       coinMap[c.name.toLowerCase()] = c.id;
     });
 
-    // 한글 매핑도 병합
     Object.entries(baseMap).forEach(([kr, en]) => {
       coinMap[kr.toLowerCase()] = en;
     });
 
-    // 캐시에 저장 (7일 유지)
     localStorage.setItem("coinMapCache", JSON.stringify(coinMap));
     localStorage.setItem("coinMapCacheTime", Date.now());
     console.log("💾 Coin list cached locally");
@@ -92,13 +108,20 @@ function initPage() {
 let realtimeChart;
 let fullChart;
 
-// ✅ 실시간 그래프 (Binance 기준)
+// ✅ 실시간 그래프 (Binance)
 function startRealtimeChart() {
-  const binanceSymbol =
-    coinName.replace(/-|\s/g, "").replace("bitcoin", "BTC").replace("ethereum", "ETH").toUpperCase() + "USDT";
+  // 1️⃣ CoinGecko ID → Binance 심볼 변환
+  const baseSymbol = binanceMap[coinName] || coinName.replace(/-|\s/g, "").toUpperCase();
+  const binanceSymbol = `${baseSymbol}USDT`;
+
+  console.log("📡 연결 중인 심볼:", binanceSymbol);
+
   const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${binanceSymbol.toLowerCase()}@trade`);
   const ctx = document.getElementById("realtimeChart").getContext("2d");
   let prices = [];
+
+  // 2️⃣ 이전 차트 제거 (중복 방지)
+  if (realtimeChart) realtimeChart.destroy();
 
   realtimeChart = new Chart(ctx, {
     type: "line",
@@ -107,8 +130,8 @@ function startRealtimeChart() {
       datasets: [{
         label: `${binanceSymbol} / USD (실시간)`,
         data: [],
-        borderColor: "#000",
-        backgroundColor: "rgba(255,255,0,0.3)",
+        borderColor: "#00b7ff",
+        backgroundColor: "rgba(0,183,255,0.2)",
         pointRadius: 0,
         tension: 0.15
       }]
@@ -138,6 +161,11 @@ function startRealtimeChart() {
 
     document.getElementById("price").innerText = `$${price.toLocaleString()}`;
   };
+
+  socket.onerror = (err) => {
+    console.error("🚨 WebSocket 오류:", err);
+    document.getElementById("price").innerText = "실시간 연결 오류";
+  };
 }
 
 // ✅ CoinGecko 전체 그래프 (최근 1년)
@@ -153,6 +181,8 @@ async function loadFullChart() {
     }));
 
     const ctx = document.getElementById("fullChart").getContext("2d");
+    if (fullChart) fullChart.destroy();
+
     fullChart = new Chart(ctx, {
       type: "line",
       data: {
@@ -169,18 +199,23 @@ async function loadFullChart() {
       options: { responsive: true, animation: false }
     });
   } catch (err) {
-    console.error("전체 그래프 오류:", err);
+    console.error("📉 전체 그래프 오류:", err);
   }
 }
 
-// ✅ 시가/변동률/거래량 등 정보
+// ✅ 시가/변동률/거래량 등 실시간 정보
 async function updateStats() {
   try {
-    const symbol = coinName.replace(/-|\s/g, "").toUpperCase() + "USDT";
+    const baseSymbol = binanceMap[coinName] || coinName.replace(/-|\s/g, "").toUpperCase();
+    const symbol = `${baseSymbol}USDT`;
+
     const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
     const data = await res.json();
 
-    if (!data || !data.lastPrice) return;
+    if (!data || !data.lastPrice) {
+      document.getElementById("price").innerText = "데이터 없음";
+      return;
+    }
 
     const change = parseFloat(data.priceChangePercent).toFixed(2);
     const vol = parseFloat(data.quoteVolume);
@@ -191,13 +226,13 @@ async function updateStats() {
     document.getElementById("volume").innerText = `$${vol.toLocaleString()}`;
     document.getElementById("high").innerText = `$${high.toLocaleString()}`;
     document.getElementById("low").innerText = `$${low.toLocaleString()}`;
-    document.getElementById("change").style.color = change >= 0 ? "green" : "red";
+    document.getElementById("change").style.color = change >= 0 ? "limegreen" : "red";
 
     const box = document.querySelector(".live-info");
-    box.classList.remove("up", "down");
-    box.classList.add(change >= 0 ? "up" : "down");
+    box?.classList.remove("up", "down");
+    box?.classList.add(change >= 0 ? "up" : "down");
   } catch (err) {
-    console.error("업데이트 오류:", err);
+    console.error("📊 업데이트 오류:", err);
   }
 }
 
