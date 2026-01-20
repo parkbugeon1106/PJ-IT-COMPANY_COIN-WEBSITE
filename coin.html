@@ -4,36 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>코인 상세 | PJ COMPANY COIN SITE</title>
+
+  <!-- Style -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Coin Logic -->
   <script defer src="coin.js"></script>
 </head>
 <body>
+
   <header>
-    <div class="logo" onclick="window.location.href='index.html'">PJ IT COMPANY</div>
-    <div class="site-title">PJ COMPANY COIN SITE</div>
+    <div class="logo" onclick="window.location.href='index.html'">
+      PJ IT COMPANY
+    </div>
+    <div class="site-title">
+      PJ COMPANY COIN SITE
+    </div>
   </header>
 
   <main>
     <section class="coin-info">
+
+      <!-- 코인 이름 -->
       <h2 id="coin-title">로딩 중...</h2>
 
+      <!-- 실시간 그래프 -->
       <h3>📈 실시간 그래프</h3>
-      <canvas id="realtimeChart"></canvas>
+      <canvas id="realtimeChart" height="200"></canvas>
 
+      <!-- 전체 그래프 -->
       <h3>📊 전체(24시간) 그래프</h3>
-      <canvas id="fullChart"></canvas>
+      <canvas id="fullChart" height="200"></canvas>
 
-      <div class="live-info">
+      <!-- 실시간 정보 -->
+      <div class="live-info" id="live-info">
         <p><b>현재가:</b> <span id="price">-</span> USD</p>
         <p><b>변동률:</b> <span id="change">-</span>%</p>
         <p><b>거래량(24h):</b> <span id="volume">-</span> USD</p>
         <p><b>최고가(24h):</b> <span id="high">-</span> USD</p>
         <p><b>최저가(24h):</b> <span id="low">-</span> USD</p>
       </div>
+
     </section>
   </main>
 
-  <footer>© 2025 PJ IT COMPANY — All Rights Reserved.</footer>
+  <footer>
+    © 2025 PJ IT COMPANY — All Rights Reserved.
+  </footer>
+
 </body>
 </html>
